@@ -1,34 +1,46 @@
-var http = require('http');
+var express = require('express');
+var path = require('path');
+var favicon = require('serve-favicon');
+var logger = require('morgan');
+var cookieParser = require('cookie-parser');
+var bodyParser = require('body-parser');
 
-function getJSON(options, cb){
-	http.request(options, function(res){
-		var body = '';
+var index = require('./routes/index');
+var users = require('./routes/users');
 
-		res.on('data', function(chunk){
-			body += chunk;
-		});
+var app = express();
 
-		res.on('end', function(){
-			var price = JSON.parse(body);
-			cb(null, result);
-		});
+// view engine setup
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'ejs');
 
-		res.on('error', cb);
-	}).end();
-	.on('error', cb)
-	.end();
-}
+// uncomment after placing your favicon in /public
+//app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
+app.use(logger('dev'));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(cookieParser());
+app.use(express.static(path.join(__dirname, 'public')));
 
-var options = {
-	host: 'api-sandbox.oanda.com',
-	port: 80,
-	path: '/v1/quote?instruments=USD_ZAR',
-	method: 'GET'
-};
+app.use('/', index);
+app.use('/users', users);
 
-getJSON(options, function(err, result){
-	if(err){
-		return console.log('Error while trying to get price: ', err);
-	}
-	console.log(result);
+// catch 404 and forward to error handler
+app.use(function(req, res, next) {
+  var err = new Error('Not Found');
+  err.status = 404;
+  next(err);
 });
+
+// error handler
+app.use(function(err, req, res, next) {
+  // set locals, only providing error in development
+  res.locals.message = err.message;
+  res.locals.error = req.app.get('env') === 'development' ? err : {};
+
+  // render the error page
+  res.status(err.status || 500);
+  res.render('error');
+});
+
+module.exports = app;
